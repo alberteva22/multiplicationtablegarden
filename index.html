@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<title>Szorzótábla Kert/ Multiplication Table Garden</title>
+<meta name="author" content="Eva Valentne Dr. Albert + ChatGpt+ image from freesvg.org">
+
+<style>
+body {
+    margin:0;
+    font-family: Arial, sans-serif;
+    display:flex;
+    height:100vh;
+}
+
+.panel {
+    width:30%;
+    padding:20px;
+    box-sizing:border-box;
+    background:#f4f4f4;
+}
+
+.kert {
+    width:40%;
+    position:relative;
+    background:linear-gradient(to top, #6b4f2a 30%, #87CEEB 30%);
+    overflow:hidden;
+}
+
+.virag {
+    position:absolute;
+    width:60px;
+    transition:0.5s;
+}
+
+button {
+    padding:8px;
+    margin:5px 0;
+    width:100%;
+}
+
+.keyboard button {
+    width:30%;
+    margin:3px;
+}
+
+.feladat {
+    font-size:22px;
+    margin:10px 0;
+}
+
+input {
+    width:100%;
+    font-size:20px;
+    text-align:center;
+}
+</style>
+</head>
+<body>
+
+<div class="panel" id="balPanel"></div>
+<div class="kert" id="kert"></div>
+<div class="panel" id="jobbPanel"></div>
+
+<script>
+
+const viragLista = [
+"virag1.svg","virag2.svg","virag3.svg","virag4.svg",
+"virag5.svg","virag6.svg","virag7.svg","virag8.svg",
+"virag9.svg","virag10.svg","virag11.svg","virag12.svg"
+];
+
+let szabadViragok = [...viragLista];
+let elultetettViragok = [];
+let teljesitettTablak = new Set();
+
+function createPanel(panelId){
+
+    const panel = document.getElementById(panelId);
+
+    panel.innerHTML = `
+        <h2>${panelId === "balPanel" ? "A csapat/ A group" : "B csapat/ B group"}</h2>
+        <label>Szorzó tényező:/Factor: <span class="tablaSzam">0</span></label>
+        <input type="range" min="0" max="10" value="0" class="slider">
+        <button class="edzes">Edzés/Training</button>
+        <button class="mix">Mix</button>
+        <div class="feladat"></div>
+        <div style="display:flex; gap:5px;">
+            <input type="text" class="valasz" readonly style="flex:1;">
+            <button class="enterBtn" style="width:80px;">Enter</button>
+        </div>
+        <div class="keyboard"></div>
+        <img class="sajatVirag" width="80">
+    `;
+
+    const slider = panel.querySelector(".slider");
+    const tablaSzam = panel.querySelector(".tablaSzam");
+    const feladatDiv = panel.querySelector(".feladat");
+    const valaszInput = panel.querySelector(".valasz");
+    const sajatVirag = panel.querySelector(".sajatVirag");
+    const enterBtn = panel.querySelector(".enterBtn");
+    const edzesBtn = panel.querySelector(".edzes");
+
+    let aktualisTabla = 0;
+    let kerdesLista = [];
+    let aktualisKerdes = 0;
+    let helyesDb = 0;
+    let mod = "edzes";
+
+    slider.oninput = () => {
+        aktualisTabla = parseInt(slider.value);
+        tablaSzam.textContent = aktualisTabla;
+    //  induljon edzésként
+        mod="edzes";
+    generalKerdesek(true);
+
+   
+ 
+       
+    };
+
+    function generalKerdesek(edzes){
+
+        mod = edzes ? "edzes" : "mix";
+        kerdesLista = [];
+
+        if(edzes){
+            for(let i=0;i<=10;i++) kerdesLista.push(i);
+        } else {
+            while(kerdesLista.length<3){
+                let r = Math.floor(Math.random()*10);
+                if(!kerdesLista.includes(r)) kerdesLista.push(r);
+            }
+        }
+
+        aktualisKerdes=0;
+        helyesDb=0;
+        ujVirag();
+        kovetkezoKerdes();
+    }
+
+    function kovetkezoKerdes(){
+
+        if(aktualisKerdes >= kerdesLista.length){
+
+            if(mod==="edzes"){
+                teljesitettTablak.add(aktualisTabla);
+            }
+
+            ultetes();
+            kovetkezoTabla();
+            return;
+        }
+
+        let masodik = kerdesLista[aktualisKerdes];
+        feladatDiv.textContent = `${aktualisTabla} × ${masodik} = ?`;
+        valaszInput.value="";
+    }
+
+    function ellenoriz(){
+
+        let masodik = kerdesLista[aktualisKerdes];
+        let helyes = aktualisTabla * masodik;
+
+        if(parseInt(valaszInput.value) === helyes){
+
+            helyesDb++;
+
+            if(mod==="edzes"){
+                frissitSajatVirag(helyesDb*10);
+            } else {frissitSajatVirag(helyesDb*33);
+ontözFöldben();ontözFöldben();ontözFöldben();
+                if(helyesDb===3){
+                    frissitSajatVirag(100);
+ 
+                }
+            }
+
+            ontözFöldben();
+            aktualisKerdes++;
+            kovetkezoKerdes();
+
+        } else {
+            alert("Próbáld újra!");
+            valaszInput.value="";
+        }
+    }
+
+    function frissitSajatVirag(szazalek){
+        sajatVirag.style.filter = `grayscale(${100-szazalek}%)`;
+    }
+
+    function ujVirag(){
+        if(szabadViragok.length===0) return;
+
+        let index = Math.floor(Math.random()*szabadViragok.length);
+        sajatVirag.src = "viragok/" + szabadViragok[index];
+        sajatVirag.dataset.fajl = szabadViragok[index];
+        sajatVirag.style.filter="grayscale(100%)";
+    }
+
+    function ultetes(){
+
+        if(!sajatVirag.dataset.fajl) return;
+
+        let viragFajl = sajatVirag.dataset.fajl;
+        szabadViragok = szabadViragok.filter(v=>v!==viragFajl);
+
+        const img = document.createElement("img");
+        img.src="viragok/"+viragFajl;
+        img.className="virag";
+        img.dataset.szint = 0;
+
+        let x = Math.random()*80 + 10;
+        let y = Math.random()*25 + 70;   // CSAK FÖLDRE
+
+        img.style.left=x+"%";
+        img.style.top=y+"%";
+        img.style.filter="grayscale(100%)";
+
+        document.getElementById("kert").appendChild(img);
+        elultetettViragok.push(img);
+
+        sajatVirag.src="";
+    }
+
+    function ontözFöldben(){
+
+        if(elultetettViragok.length===0) return;
+
+        let index = Math.floor(Math.random()*elultetettViragok.length);
+        let virag = elultetettViragok[index];
+
+        let szint = parseInt(virag.dataset.szint);
+        if(szint<100){
+            szint+=10;
+            virag.dataset.szint = szint;
+            virag.style.filter = `grayscale(${100-szint}%)`;
+        }
+    }
+
+    function kovetkezoTabla(){
+        let uj = aktualisTabla+1;
+        if(uj>9) uj=0;
+        slider.value=uj;
+        slider.dispatchEvent(new Event("input"));
+    }
+
+    panel.querySelector(".edzes").onclick=()=>generalKerdesek(true);
+    panel.querySelector(".mix").onclick=()=>generalKerdesek(false);
+
+    const keyboard = panel.querySelector(".keyboard");
+
+    for(let i=1;i<=9;i++){
+        let btn=document.createElement("button");
+        btn.textContent=i;
+        btn.onclick=()=>valaszInput.value+=i;
+        keyboard.appendChild(btn);
+    }
+
+    let zero=document.createElement("button");
+    zero.textContent="0";
+    zero.onclick=()=>valaszInput.value+="0";
+    keyboard.appendChild(zero);
+
+    let torol=document.createElement("button");
+    torol.textContent="Törlés/Del";
+    torol.onclick=()=>valaszInput.value="";
+    keyboard.appendChild(torol);
+
+    enterBtn.onclick = ellenoriz;
+}
+
+createPanel("balPanel");
+createPanel("jobbPanel");
+
+</script>
+</body>
+</html>
