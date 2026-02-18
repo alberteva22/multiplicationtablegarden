@@ -8,16 +8,18 @@
 <style>
 body {
     margin:0;
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     display:flex;
     height:100vh;
 }
 
-.panel {
+.panel{
     width:30%;
-    padding:20px;
-    box-sizing:border-box;
     background:#f4f4f4;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:15px;
 }
 
 .kert {
@@ -27,16 +29,43 @@ body {
     overflow:hidden;
 }
 
+.cim{
+    position:absolute;
+    top:10px;
+    width:100%;
+    text-align:center;
+    font-size:22px;
+    font-weight:bold;
+    color:#2d2d2d;
+}
+
+.ido{
+    position:absolute;
+    top:70px;
+    width:100%;
+    text-align:center;
+    font-size:16px;
+    color:#555;
+}
+
 .virag {
     position:absolute;
     width:60px;
     transition:0.5s;
 }
 
+.controls{ margin-top:auto; }
+
 button {
     padding:8px;
     margin:5px 0;
     width:100%;
+}
+
+.keyboard{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:space-between;
 }
 
 .keyboard button {
@@ -54,25 +83,85 @@ input {
     font-size:20px;
     text-align:center;
 }
+
+.uzenet{
+    position:absolute;
+    bottom:0;
+    width:100%;
+    background:#ffdddd;
+    text-align:center;
+    font-size:20px;
+    padding:8px;
+    display:none;
+}
 </style>
 </head>
 <body>
 
 <div class="panel" id="balPanel"></div>
-<div class="kert" id="kert"></div>
+
+<div class="kert" id="kert">
+<div class="cim">
+Szorzótábla kert/<br>
+Multiplication Table Garden
+</div>
+<div class="ido" id="ido">⏱ 0:00</div>
+<div class="uzenet" id="uzenet"></div>
+</div>
+
 <div class="panel" id="jobbPanel"></div>
 
 <script>
 
+/* ========= 22 VIRÁG ========= */
 const viragLista = [
 "virag1.svg","virag2.svg","virag3.svg","virag4.svg",
 "virag5.svg","virag6.svg","virag7.svg","virag8.svg",
-"virag9.svg","virag10.svg","virag11.svg","virag12.svg"
+"virag9.svg","virag10.svg","virag11.svg","virag12.svg",
+"virag13.svg","virag14.svg","virag15.svg","virag16.svg",
+"virag17.svg","virag18.svg","virag19.svg","virag20.svg",
+"virag21.svg","virag22.svg"
 ];
 
-let szabadViragok = [...viragLista];
+/* ========= VÉLETLEN KEVERÉS ========= */
+function shuffle(array){
+    return array.sort(()=>Math.random()-0.5);
+}
+
+const kevert = shuffle([...viragLista]);
+
+const A_viragok = kevert.slice(0,11);
+const B_viragok = kevert.slice(11,22);
+
+/* ========= SZORZÓTÁBLA → VIRÁG TÉRKÉP ========= */
+const A_tablaVirag = {};
+const B_tablaVirag = {};
+
+for(let i=0;i<=10;i++){
+    A_tablaVirag[i] = A_viragok[i];
+    B_tablaVirag[i] = B_viragok[i];
+}
+
 let elultetettViragok = [];
 let teljesitettTablak = new Set();
+
+/* ========= IDŐMÉRŐ ========= */
+let startTime = Date.now();
+setInterval(()=>{
+    let diff = Math.floor((Date.now()-startTime)/1000);
+    let perc = Math.floor(diff/60);
+    let mp = diff%60;
+    document.getElementById("ido").textContent =
+        "⏱ " + perc + ":" + (mp<10?"0":"") + mp;
+},1000);
+
+/* ========= ÜZENET ========= */
+function uzenet(szoveg){
+    const u=document.getElementById("uzenet");
+    u.textContent=szoveg;
+    u.style.display="block";
+    setTimeout(()=>u.style.display="none",2000);
+}
 
 function createPanel(panelId){
 
@@ -80,6 +169,8 @@ function createPanel(panelId){
 
     panel.innerHTML = `
         <h2>${panelId === "balPanel" ? "A csapat/ A group" : "B csapat/ B group"}</h2>
+        <img class="sajatVirag" width="80">
+        <div class="controls">
         <label>Szorzó tényező:/Factor: <span class="tablaSzam">0</span></label>
         <input type="range" min="0" max="10" value="0" class="slider">
         <button class="edzes">Edzés/Training</button>
@@ -90,7 +181,7 @@ function createPanel(panelId){
             <button class="enterBtn" style="width:80px;">Enter</button>
         </div>
         <div class="keyboard"></div>
-        <img class="sajatVirag" width="80">
+        </div>
     `;
 
     const slider = panel.querySelector(".slider");
@@ -99,7 +190,6 @@ function createPanel(panelId){
     const valaszInput = panel.querySelector(".valasz");
     const sajatVirag = panel.querySelector(".sajatVirag");
     const enterBtn = panel.querySelector(".enterBtn");
-    const edzesBtn = panel.querySelector(".edzes");
 
     let aktualisTabla = 0;
     let kerdesLista = [];
@@ -107,16 +197,22 @@ function createPanel(panelId){
     let helyesDb = 0;
     let mod = "edzes";
 
+    /* ======= VIRÁG KIVÁLASZTÁS TÁBLA ALAPJÁN ======= */
+    function ujViragTablaAlapjan(){
+        if(panelId==="balPanel"){
+            sajatVirag.src = A_tablaVirag[aktualisTabla];
+        } else {
+            sajatVirag.src = B_tablaVirag[aktualisTabla];
+        }
+        sajatVirag.dataset.fajl = sajatVirag.src;
+        sajatVirag.style.filter="grayscale(100%)";
+    }
+
     slider.oninput = () => {
         aktualisTabla = parseInt(slider.value);
         tablaSzam.textContent = aktualisTabla;
-    //  induljon edzésként
         mod="edzes";
-    generalKerdesek(true);
-
-   
- 
-       
+        generalKerdesek(true);
     };
 
     function generalKerdesek(edzes){
@@ -135,7 +231,7 @@ function createPanel(panelId){
 
         aktualisKerdes=0;
         helyesDb=0;
-        ujVirag();
+        ujViragTablaAlapjan();
         kovetkezoKerdes();
     }
 
@@ -153,7 +249,7 @@ function createPanel(panelId){
         }
 
         let masodik = kerdesLista[aktualisKerdes];
-        feladatDiv.textContent = `${aktualisTabla} × ${masodik} = ?`;
+        feladatDiv.textContent = `${aktualisTabla} \u00B7 ${masodik} = ?`;
         valaszInput.value="";
     }
 
@@ -168,20 +264,19 @@ function createPanel(panelId){
 
             if(mod==="edzes"){
                 frissitSajatVirag(helyesDb*10);
-            } else {frissitSajatVirag(helyesDb*33);
+            } else {
+                frissitSajatVirag(helyesDb*33);
 ontözFöldben();ontözFöldben();ontözFöldben();
                 if(helyesDb===3){
                     frissitSajatVirag(100);
- 
                 }
             }
-
-            ontözFöldben();
+ontözFöldben();
             aktualisKerdes++;
             kovetkezoKerdes();
 
         } else {
-            alert("Próbáld újra!");
+            uzenet("Próbáld újra! / Try again!");
             valaszInput.value="";
         }
     }
@@ -190,41 +285,58 @@ ontözFöldben();ontözFöldben();ontözFöldben();
         sajatVirag.style.filter = `grayscale(${100-szazalek}%)`;
     }
 
-    function ujVirag(){
-        if(szabadViragok.length===0) return;
-
-        let index = Math.floor(Math.random()*szabadViragok.length);
-        sajatVirag.src = "viragok/" + szabadViragok[index];
-        sajatVirag.dataset.fajl = szabadViragok[index];
-        sajatVirag.style.filter="grayscale(100%)";
-    }
-
     function ultetes(){
 
         if(!sajatVirag.dataset.fajl) return;
 
-        let viragFajl = sajatVirag.dataset.fajl;
-        szabadViragok = szabadViragok.filter(v=>v!==viragFajl);
-
         const img = document.createElement("img");
-        img.src="viragok/"+viragFajl;
+        img.src=sajatVirag.dataset.fajl;
         img.className="virag";
-        img.dataset.szint = 0;
+  img.dataset.szint = 0;        
+img.style.filter="grayscale(100%)";
 
-        let x = Math.random()*80 + 10;
-        let y = Math.random()*25 + 70;   // CSAK FÖLDRE
+        let placed = false;
+let attempts = 0;
+let x, y;
 
-        img.style.left=x+"%";
-        img.style.top=y+"%";
-        img.style.filter="grayscale(100%)";
+while(!placed && attempts < 100){
+    x = Math.random()*80 + 5;
+    y = 75 + Math.random()*5;
 
-        document.getElementById("kert").appendChild(img);
-        elultetettViragok.push(img);
+    let overlap = false;
 
-        sajatVirag.src="";
+    for(let v of elultetettViragok){
+        let dx = Math.abs(parseFloat(v.style.left) - x);
+        if(dx < 8){
+            overlap = true;
+            break;
+        }
     }
 
-    function ontözFöldben(){
+    if(!overlap){
+        placed = true;
+    }
+
+    attempts++;
+}
+
+// HA nem talált helyet, akkor is tegyük le
+if(!placed){
+    x = Math.random()*90 + 5;
+    y = 70 + Math.random()*25;
+}
+
+img.style.left = x + "%";
+img.style.top = y + "%";
+
+document.getElementById("kert").appendChild(img);
+elultetettViragok.push(img);
+sajatVirag.src = "";
+
+
+    }
+
+function ontözFöldben(){
 
         if(elultetettViragok.length===0) return;
 
@@ -238,6 +350,8 @@ ontözFöldben();ontözFöldben();ontözFöldben();
             virag.style.filter = `grayscale(${100-szint}%)`;
         }
     }
+
+
 
     function kovetkezoTabla(){
         let uj = aktualisTabla+1;
