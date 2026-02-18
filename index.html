@@ -12,7 +12,6 @@ body {
     display:flex;
     height:100vh;
 width:100vw;
-    overflow:hidden;
 }
 
 .panel{
@@ -21,8 +20,7 @@ flex:1;
     background:#f4f4f4;
     display:flex;
     flex-direction:column;
-    justify-content:space-between;
-    padding:15px;
+        padding:15px;
 }
 
 .kert {
@@ -53,27 +51,32 @@ flex:1;
 
 .virag {
     position:absolute;
-    width:60px;
+    height:6vh;
+    width:auto;
+    max-height:60px;
+    min-height:30px;
     transition:0.5s;
 }
-
 .controls{ margin-top:auto; }
 
 button {
-    padding:8px;
-    margin:5px 0;
+    padding:6px;
+    margin:3px 0;
     width:100%;
 }
 
 .keyboard{
     display:flex;
-    flex-wrap:wrap;
+flex-grow:1;    
+ flex-wrap:wrap;
     justify-content:space-between;
 }
 
 .keyboard button {
     width:30%;
     margin:3px;
+padding:6px;
+    font-size:1.1rem;
 }
 
 .feladat {
@@ -97,7 +100,16 @@ input {
     padding:8px;
     display:none;
 }
-</style>
+.sajatVirag {
+    height:8vh;
+    max-height:80px;
+    min-height:40px;
+
+    max-width:100%;
+    object-fit:contain;
+    display:block;
+    margin:0 auto;
+}</style>
 </head>
 <body>
 
@@ -172,7 +184,7 @@ function createPanel(panelId){
 
     panel.innerHTML = `
         <h2>${panelId === "balPanel" ? "A csapat/ A group" : "B csapat/ B group"}</h2>
-        <img class="sajatVirag" width="80">
+        <img class="sajatVirag">
         <div class="controls">
         <label>Szorzó tényező:/Factor: <span class="tablaSzam">0</span></label>
         <input type="range" min="0" max="10" value="0" class="slider">
